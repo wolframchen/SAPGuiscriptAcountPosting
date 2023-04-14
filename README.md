@@ -44,7 +44,7 @@ BEFORE that you need to activate the SAP session by
 
     ' below is the mapping  (copy to excel you will see)
     
-    Header FieldsName(check with E1!!)(.*as RegExp!!)	3	Additional Menu/btn	Exit Popup	Mandatory?	7	Items FieldsName(check with E1!!)(.*as RegExp!!)	9	Additional Menu/btn	Exit Popup	Mandatory?
+Header FieldsName(check with E1!!)(.*as RegExp!!)	3	Additional Menu/btn	Exit Popup	Mandatory?	7	Items FieldsName(check with E1!!)(.*as RegExp!!)	9	Additional Menu/btn	Exit Popup	Mandatory?
 ctxtBKPF-BUKRS	Company Code					ctxtRF05A-NEWBS	PstKy			
 ctxtBKPF-BLDAT	Document Date					ctxtRF05A-NEWKO	Account			
 ctxtBKPF-BLART	Type					ctxtRF05A-NEWUM	special indicator			
