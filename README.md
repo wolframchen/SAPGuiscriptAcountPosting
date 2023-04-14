@@ -43,3 +43,23 @@ BEFORE that you need to activate the SAP session by
     Next lvi
 
     ' below is the mapping 
+    
+    Header FieldsName(check with E1!!)(.*as RegExp!!)	3	Additional Menu/btn	Exit Popup	Mandatory?	7	Items FieldsName(check with E1!!)(.*as RegExp!!)	9	Additional Menu/btn	Exit Popup	Mandatory?
+ctxtBKPF-BUKRS	Company Code					ctxtRF05A-NEWBS	PstKy			
+ctxtBKPF-BLDAT	Document Date					ctxtRF05A-NEWKO	Account			
+ctxtBKPF-BLART	Type					ctxtRF05A-NEWUM	special indicator			
+txtBKPF-XBLNR	REFERENCE					txtBSEG-WRBTR	Amount			
+ctxtBKPF-BUDAT	Posting Date					ctxtCOBL-RMVCT	Transactn Type 	subBLOCK:SAPLKACB:.*\/btnCOBL_MORE	wnd[1]/tbar[0]/btn[0]	
+ctxtBKPF-WAERS	Currency/Rate					ctxtBSEG-ZFBDT	due on			
+txtBKPF-BKTXT	Header Text					subBLOCK:SAPLKACB:.*\/ctxtCOBL-AUFNR	order			
+ctxtRF014-VBUND	Trading Partner	wnd[0]/mbar/menu[3]/menu[1]	wnd[1]/tbar[0]/btn[0]				business area			
+						subBLOCK:SAPLKACB:.*\/ctxtCOBL-KOSTL	cost center			
+						subBLOCK:SAPLKACB:.*\/ctxtCOBL-PS_POSID	WBS Element			
+						ctxtBSEG-SGTXT	Text			
+						ctxtBSEG-MWSKZ	Tax code			
+						chkBKPF-XMWST	CalcTax			N
+						txtBSEG-ZUONR	Assignment			
+							RF3			
+										
+![Uploading image.png…]()
+
