@@ -42,7 +42,8 @@ BEFORE that you need to activate the SAP session by
         Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) = Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) & ";" & Er(lvi + 4)
     Next lvi
 
-    ' below is the mapping  (copy to excel you will see)
+    ' below is the mapping  (copy to excel Sheet "CUST" to ge it working )
+    you will notice there is few fields that can use regular expression, and some fields need to jump to other screen.   play with it you will see.
     
 |     Header FieldsName(check with E1!!)(.\*as RegExp!!) | 3               | Additional Menu/btn         | Exit Popup            | Mandatory? | 7 | Items FieldsName(check with E1!!)(.\*as RegExp!!) | 9                 | Additional Menu/btn                  | Exit Popup            | Mandatory? |
 | ------------------------------------------------------ | --------------- | --------------------------- | --------------------- | ---------- | - | ------------------------------------------------- | ----------------- | ------------------------------------ | --------------------- | ---------- |
