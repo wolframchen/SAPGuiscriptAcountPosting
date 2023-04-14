@@ -11,6 +11,11 @@ because most of the time we need to post documents, so I create this abstraction
 
 
 please check the file for the actual coding, sorry it is quite messy; I deleted alot of codes and sheets that is irrelevant  so it is not working
+you need to learn how to compose an actual running program anyway...
+
+
+
+
 
 
 pay attention to the Sub PlayBack_The_Script , this one actually execute the guiscript.
