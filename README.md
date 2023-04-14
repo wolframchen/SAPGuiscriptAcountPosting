@@ -42,7 +42,7 @@ BEFORE that you need to activate the SAP session by
         Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) = Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) & ";" & Er(lvi + 4)
     Next lvi
 
-    ' below is the mapping 
+    ' below is the mapping  (copy to excel you will see)
     
     Header FieldsName(check with E1!!)(.*as RegExp!!)	3	Additional Menu/btn	Exit Popup	Mandatory?	7	Items FieldsName(check with E1!!)(.*as RegExp!!)	9	Additional Menu/btn	Exit Popup	Mandatory?
 ctxtBKPF-BUKRS	Company Code					ctxtRF05A-NEWBS	PstKy			
@@ -61,5 +61,4 @@ ctxtRF014-VBUND	Trading Partner	wnd[0]/mbar/menu[3]/menu[1]	wnd[1]/tbar[0]/btn[0
 						txtBSEG-ZUONR	Assignment			
 							RF3			
 										
-![Uploading image.png…]()
 
