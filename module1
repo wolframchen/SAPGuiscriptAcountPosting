@@ -1,0 +1,903 @@
+   Option Explicit
+   Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+    Dim oSapGuiAuto As Object, oGuiApplication As Object, oConnection As Object, session As Object
+    Dim lLastRow As Long, lDataRow As Long
+    Dim A As String, B As String, C As String, d As String, E As String, F As String, G As String, H As String
+    Dim i As String, j As String, K As String, L As String, M As String, N As String, o As String, sMessage As String, _
+        p As String, q As String, r As String, s As String, T As String, u As String, v As String, _
+        w As String, x As String, y As String, z As String, _
+        aa As String, ab As String, ac As String, ad As String, ae As String, af As String, ag As String, ah As String, _
+        ai As String, aj As String, _
+        ak As String, al As String, am As String, an As String, ao As String, ap As String, _
+        aq As String, ar As String, a_s As String, at As String, au As String, av As String, aw As String, _
+        ax As String, ay As String, az As String
+
+    Dim tree As Object
+    Dim sStartingTransaction As String, sContinue
+    
+
+        Dim rowf As Integer, rowt As Integer
+        Dim asked As Boolean, asgo As Boolean
+        
+    
+    Dim dpos As Integer
+    Dim epos As Integer
+    Dim rpos As Integer
+    
+    Dim docseq As Integer
+    
+    Dim hi1 As Integer, hi2 As Integer, il1 As Integer, il2 As Integer, ir1 As Integer, ir2 As Integer
+    Dim Grp1 As Object
+    
+    'General FB01 Interface
+    Dim dH(1 To 30) As Variant, dI(1 To 999, 1 To 30) As Variant, Er(1 To 10) As Variant '2:6
+    Dim today As String, yesterday As String, lastmonth As String
+    
+    
+    Dim mcusu(1 To 6) As Variant, mesu(1 To 4) As Variant, mcc(1 To 4) As Variant
+    Dim m1(1 To 6) As Variant, m2(1 To 6) As Variant, m3(1 To 6) As Variant
+    Dim ac1(1 To 20) As Variant, ac2(1 To 20) As Variant
+
+        Dim scnr As String  ' scnario
+    
+    'Customizings
+    Dim C_IgnoreW As Boolean, C_Sim As Boolean
+
+    
+'// Weiming.Chen 2023.1
+'-Function GetSession---------------------------------------------------
+'- Detects the session
+'-----------------------------------------------------------------------
+Function GetSession(sid)
+  Dim SapGuiAuto, application, connections, connection, sessions
+  Dim session, sessionInfo, j, i
+
+  Set SapGuiAuto = GetObject("SAPGUI")
+  If Not IsObject(SapGuiAuto) Then
+    Exit Function
+  End If
+  Set application = SapGuiAuto.GetScriptingEngine
+  If Not IsObject(application) Then
+    Set SapGuiAuto = Nothing
+    Exit Function
+  End If
+
+  Set connections = application.connections()
+  If Not IsObject(connections) Then
+    Set SapGuiAuto = Nothing
+    Set application = Nothing
+    Exit Function
+  End If
+  '-Loop over connections-----------------------------------------------
+  For Each connection In connections
+    Set sessions = connection.sessions()
+    '-Loop over sessions------------------------------------------------
+    For Each session In sessions
+      If session.Busy() = vbFalse Then
+        Set sessionInfo = session.Info()
+        If sessionInfo.SystemName() = sid Then
+          Set GetSession = session
+        End If
+      End If
+    Next
+  Next
+End Function
+
+
+
+
+Function regstr(pattern_, str_)
+    Dim oRegEx As Object, objMatches As Object
+    Set oRegEx = CreateObject("vbscript.regexp")
+    oRegEx.Pattern = pattern_
+    
+    Set objMatches = oRegEx.Execute(str_)
+    
+    If objMatches.Count > 0 Then
+        regstr = objMatches.item(0)
+    Else
+        regstr = ""
+    End If
+End Function
+
+
+
+
+
+Function FindByIdPart(oArea, regexId)
+
+  Dim oRegEx As Object, Child As Object, iiii As Integer, fCT As Boolean
+  Set oRegEx = CreateObject("vbscript.regexp")
+  oRegEx.Pattern = regexId
+  oRegEx.IgnoreCase = True
+  oRegEx.Global = False
+
+  On Error Resume Next
+  If oArea.Children.Count() > 0 Then
+    For iiii = 0 To oArea.Children.Count() - 1
+      Set Child = oArea.Children.item(CLng(iiii))
+      If oRegEx.Test(Child.ID) Then
+        FindByIdPart = Child.ID
+        On Error GoTo 0
+        Exit Function
+      End If
+      fCT = Child.ContainerType
+      If fCT Then
+        If Child.Children.Count > 0 Then
+          FindByIdPart = FindByIdPart(session.findById(Child.ID), regexId)
+          If FindByIdPart <> "" Then
+            On Error GoTo 0
+            Exit Function
+          End If
+        End If
+      End If
+    Next
+  End If
+  On Error GoTo 0
+  FindByIdPart = ""
+
+End Function
+
+
+Function Clipboard(Optional StoreText As String) As String
+Dim x As Variant
+  x = StoreText
+  With CreateObject("htmlfile")
+    With .parentWindow.clipboardData
+      Select Case True
+        Case Len(StoreText)
+            .setData "text", x
+        Case Else
+          Clipboard = .GetData("text")
+      End Select
+    End With
+  End With
+End Function
+
+
+
+Function days()
+    today = Format(Date, "yyyymmdd")
+    yesterday = Format(Date - 1, "yyyymmdd")
+    lastmonth = Format(DateSerial(Year(Date), Month(Date), 1) - 1, "yyyymmdd")
+End Function
+
+
+Function Num2Name(ByVal ColumnNum As Long) As String
+    On Error Resume Next
+    Num2Name = ""
+    Num2Name = Replace(Cells(1, ColumnNum).Address(0, 0), "1", "")
+End Function
+
+
+Private Sub fillField(seNm As String, seVal As String, man As String)
+    If session.findById(seNm, False) Is Nothing And man = "N" Then 'Check if Found
+        Exit Sub
+    End If
+
+    If session.findById(seNm).Type = "GuiCheckBox" Then
+        If seVal = "X" Then session.findById(seNm).Selected = True
+    Else
+        session.findById(seNm).text = seVal
+    End If
+End Sub
+
+    
+
+
+
+Function ifgo()
+    
+    asked = True
+    readPara
+    days
+    
+    dpos = 30: epos = 37
+    
+    
+    Dim wshshell, hostname
+    Set wshshell = CreateObject("wscript.network")
+    hostname = wshshell.UserDomain
+    If hostname <> "CZH" And hostname <> "APAC.BOSCH.COM" Then
+      MsgBox "Voilation.SAPGui"
+      ifgo = False
+      Exit Function
+    End If
+
+
+    Dim bEntireRow As Boolean
+    With Selection
+        bEntireRow = .Address = .EntireRow.Address
+    End With
+    
+    
+    Dim rg As Range
+    Set rg = Selection
+    
+    
+    If bEntireRow = True And rg.Row > 2 Then
+        rowf = rg.Row: rowt = rg.Row + rg.Rows.Count - 1
+    Else
+        rowf = 3: rowt = 9999
+    End If
+
+
+    sContinue = MsgBox("Start Batch Processing? Simulate Mode:" & C_Sim, vbOKCancel)
+    If sContinue <> vbOK Then    ' User chose Yes.
+      ifgo = False
+      Exit Function
+    Else
+      ifgo = True
+      Exit Function
+    End If
+    
+End Function
+
+
+
+' general matching
+Function matchr(arr As Variant, rng As Range, rp As Integer)
+    Dim iii As Integer
+    Dim crow As Range, mycell As Range
+    Dim notmtch As Boolean
+    
+    For Each crow In rng.Rows
+    
+        For Each mycell In crow.Cells
+        
+            If arr(mycell.Column - rp) <> "/" And arr(mycell.Column - rp) <> mycell.Value Then
+                notmtch = True
+                Exit For
+            End If
+        
+        Next mycell
+    
+        If notmtch = False Then
+            For Each mycell In crow.Cells
+                arr(mycell.Column - rp) = mycell.Value
+            Next mycell
+            Exit For
+        Else
+            notmtch = False
+        End If
+    Next crow
+End Function
+
+Sub button0()
+    docseq = 127
+    SXXX_
+End Sub
+Sub button1()
+    docseq = 64
+    SXXX_
+End Sub
+Sub button2()
+    docseq = 32
+    SXXX_
+End Sub
+Sub button3()
+    docseq = 16
+    SXXX_
+End Sub
+Sub button4()
+    docseq = 8
+    SXXX_
+End Sub
+Sub button5()
+    docseq = 4
+    SXXX_
+End Sub
+Sub button6()
+    docseq = 2
+    SXXX_
+End Sub
+Sub button7()
+    docseq = 1
+    SXXX_
+End Sub
+
+
+
+Sub lookup() 'pop up fb03 display document
+    Dim selectedCell As Range
+    Set selectedCell = ActiveCell
+    Dim docu As String
+    docu = regstr("\d{10};CN[0-9A-Z]{2};[0-9]{4}", selectedCell.Value)
+    On Error GoTo ErrorHandler2
+    If docu <> "" Then
+        Set session = GetSession(Sheets("SAP_DATA").Cells(1, 2))
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nfb03"
+        session.findById("wnd[0]").sendVKey 0
+        session.findById("wnd[0]/usr/txtRF05L-BELNR").text = Left(docu, 10)
+        session.findById("wnd[0]/usr/ctxtRF05L-BUKRS").text = Mid(docu, 12, 4)
+        session.findById("wnd[0]/usr/txtRF05L-GJAHR").text = Right(docu, 4)
+        session.findById("wnd[0]").sendVKey 0
+    End If
+ErrorHandler2:
+    If (session Is Nothing) Then
+      MsgBox " Cannot Find live SAP GUI with Specific System "
+    End If
+    End
+End Sub
+
+
+Sub SXXX_()
+    
+    Dim ErrStr As String
+    
+    If Not asked Then
+        asgo = ifgo
+    End If
+    If Not asgo Then
+        Exit Sub
+    End If
+
+    On Error GoTo ErrorHandler1
+    Set session = GetSession(Sheets("SAP_DATA").Cells(1, 2))
+
+'   loop
+    For lDataRow = rowf To rowt
+        ErrStr = ""
+    
+        Read_Spreadsheet
+        
+        If B = "" Then Exit For
+        
+        
+'       decide scenario
+'           Dim mcusu(1 To 6) As Variant, mesu(q To 4) As Variant, mcc(1 To 4) As Variant
+        
+        'match company
+        initft m1: m1(2) = B
+        matchr m1, Sheets("IC_CUSU").Range("A2:F100"), 0   ' for matching...
+        initft m2: m2(2) = C
+        matchr m2, Sheets("IC_CUSU").Range("A2:F100"), 0
+        initft m3: m3(2) = d
+        matchr m3, Sheets("IC_CUSU").Range("A2:F100"), 0
+        
+        If m1(1) = "/" Or m2(1) = "/" Or m3(1) = "/" Then
+            ErrStr = ";Err: Match CCd for " & B & ";" & C & ";" & d
+            GoTo nexti
+        End If
+        
+        
+        ' I deleted a lot of codes heere
+        
+        
+        
+        Select Case scnr
+            Case "S1"
+                If 64 = (docseq And 64) Then s111_
+                If 32 = (docseq And 32) Then s112_
+                If 16 = (docseq And 16) Then s121_
+                If 8 = (docseq And 8) Then s122_
+                If 2 = (docseq And 2) Then s131_
+                If 1 = (docseq And 1) Then s132_
+            Case "S2"
+                If 64 = (docseq And 64) Then s211_
+                If 32 = (docseq And 32) Then s212_
+                If 16 = (docseq And 16) Then s221_
+                If 8 = (docseq And 8) Then s222_
+                If 4 = (docseq And 4) Then s223_
+                If 2 = (docseq And 2) Then s231_
+                If 1 = (docseq And 1) Then s232_
+            Case "S3"
+                If 64 = (docseq And 64) Then s311_
+                If 32 = (docseq And 32) Then s312_
+                If 16 = (docseq And 16) Then s321_
+                If 8 = (docseq And 8) Then s322_
+        End Select
+        
+        
+nexti:
+        Sheets("SAP_DATA").Cells(lDataRow, 29) = ErrStr
+    Next lDataRow
+
+
+ErrorHandler1:
+    If (session Is Nothing) Then
+      MsgBox " Cannot Find live SAP GUI with Specific System "
+    End If
+    End
+
+End Sub
+
+
+
+Sub s311_()
+    rpos = 0 ' reletive postition
+    clrd
+    
+    
+    If regstr("\d{10};CN[0-9A-Z]{2}", Sheets("SAP_DATA").Cells(lDataRow, dpos + rpos)) <> "" Then Exit Sub
+    
+    
+    dH(1) = m1(3): dH(2) = today: dH(3) = "SA": dH(4) = "assss"
+    dH(5) = today: dH(6) = "CNY": dH(7) = Left(lastmonth, 6) & scnr & "-" & Str(lDataRow - 2)
+
+
+    Dim lvi As Integer, route As Integer, item As Integer, col As String, amt As String
+    
+    For lvi = 1 To 18
+        amt = "0"
+        amt = Sheets("SAP_DATA").Cells(lDataRow, 6 + lvi)
+    
+        If amt <> 0 Then
+            Select Case lvi
+                Case 6, 8, 10, 14, 16, 17, 18
+                    route = 1
+                Case 1, 3, 4
+                    route = 2
+                Case Else
+                    route = 3
+            End Select
+            
+            If 1 = (1 And route) Then
+    
+
+                item = item + 1
+                 
+                    
+                dI(item, 1) = "40": dI(item, 2) = ac1(lvi + 2):  dI(item, 4) = amt:
+                dI(item, 11) = Left(lastmonth, 6) & d
+
+                
+            End If
+            
+            If 2 = (2 And route) Then
+                
+                
+                item = item + 1
+                 
+                    
+                dI(item, 1) = "50": dI(item, 2) = ac2(lvi + 2):  dI(item, 4) = amt:
+                dI(item, 11) = Left(lastmonth, 6) & d
+                dI(item, 9) = mcc(2)
+                
+            End If
+        End If
+    Next lvi
+    
+    PlayBack_The_Script
+
+    
+     If regstr("\d{10} was posted", Er(5)) <> "" Then Sheets("SAP_DATA").Cells(lDataRow, dpos + rpos) = regstr("\d{10}", Er(5)) & ";" & regstr("CN[A-Z0-9]{2}", Er(5)) & ";" & Left(today, 4)
+    
+    
+    For lvi = 0 To 6
+        Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) = Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) & ";" & Er(lvi + 4)
+    Next lvi
+
+End Sub
+
+Sub s312_()
+
+    rpos = 1 ' reletive postition
+    clrd
+    
+    
+    If regstr("\d{10};CN[0-9A-Z]{2}", Sheets("SAP_DATA").Cells(lDataRow, dpos + rpos)) <> "" Then Exit Sub
+    
+    
+    dH(1) = m1(3): dH(2) = today: dH(3) = "DA": dH(4) = "asss"
+    dH(5) = today: dH(6) = "CNY": dH(7) = Left(lastmonth, 6) & scnr & "-" & Str(lDataRow - 2)
+
+
+    Dim lvi As Integer, route As Integer, item As Integer, col As String, amt As String, amt1 As String
+    
+                amt = Sheets("SAP_DATA").Cells(lDataRow, 6 + 2)
+                amt1 = Sheets("SAP_DATA").Cells(lDataRow, 6 + 18)
+                
+                
+                If amt = 0 And amt1 = 0 Then
+                    Sheets("SAP_DATA").Cells(lDataRow, dpos + rpos) = "No Value!"
+                    Exit Sub
+                End If
+                
+                If amt > 0 Then
+                    item = item + 1
+                    dI(item, 1) = "50": dI(item, 2) = "32210060":  dI(item, 4) = amt:
+                    dI(item, 11) = Left(lastmonth, 6) & d
+                End If
+                
+                
+                If amt1 > 0 Then
+                    item = item + 1
+                    dI(item, 1) = "50": dI(item, 2) = "32210000":  dI(item, 4) = amt1:
+                    dI(item, 11) = Left(lastmonth, 6) & d
+                End If
+                
+                amt1 = CDbl(amt1) + CDbl(amt)
+                item = item + 1
+                dI(item, 1) = "01": dI(item, 2) = m2(4):  dI(item, 4) = amt1:
+                dI(item, 11) = Left(lastmonth, 6) & d
+    
+    
+    PlayBack_The_Script
+
+    
+     If regstr("\d{10} was posted", Er(5)) <> "" Then Sheets("SAP_DATA").Cells(lDataRow, dpos + rpos) = regstr("\d{10}", Er(5)) & ";" & regstr("CN[A-Z0-9]{2}", Er(5)) & ";" & Left(today, 4)
+    
+    
+    For lvi = 0 To 6
+        Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) = Sheets("SAP_DATA").Cells(lDataRow, epos + rpos) & ";" & Er(lvi + 4)
+    Next lvi
+
+
+End Sub
+
+
+
+Private Sub Read_Spreadsheet()
+
+    A = Trim(Sheets("SAP_DATA").Cells(lDataRow, 1))
+    B = Trim(Sheets("SAP_DATA").Cells(lDataRow, 2))
+    C = Trim(Sheets("SAP_DATA").Cells(lDataRow, 3))
+    d = Trim(Sheets("SAP_DATA").Cells(lDataRow, 4))
+    E = Trim(Sheets("SAP_DATA").Cells(lDataRow, 5))
+    F = Trim(Sheets("SAP_DATA").Cells(lDataRow, 6))
+    G = Trim(Sheets("SAP_DATA").Cells(lDataRow, 7))
+    H = Trim(Sheets("SAP_DATA").Cells(lDataRow, 8))
+    i = Trim(Sheets("SAP_DATA").Cells(lDataRow, 9))
+    j = Trim(Sheets("SAP_DATA").Cells(lDataRow, 10))
+    K = Trim(Sheets("SAP_DATA").Cells(lDataRow, 11))
+    L = Trim(Sheets("SAP_DATA").Cells(lDataRow, 12))
+    M = Trim(Sheets("SAP_DATA").Cells(lDataRow, 13))
+    N = Trim(Sheets("SAP_DATA").Cells(lDataRow, 14))
+    o = Trim(Sheets("SAP_DATA").Cells(lDataRow, 15))
+    p = Trim(Sheets("SAP_DATA").Cells(lDataRow, 16))
+    q = Trim(Sheets("SAP_DATA").Cells(lDataRow, 17))
+    r = Trim(Sheets("SAP_DATA").Cells(lDataRow, 18))
+    s = Trim(Sheets("SAP_DATA").Cells(lDataRow, 19))
+    T = Trim(Sheets("SAP_DATA").Cells(lDataRow, 20))
+    u = Trim(Sheets("SAP_DATA").Cells(lDataRow, 21))
+    v = Trim(Sheets("SAP_DATA").Cells(lDataRow, 22))
+    w = Trim(Sheets("SAP_DATA").Cells(lDataRow, 23))
+    x = Trim(Sheets("SAP_DATA").Cells(lDataRow, 24))
+    y = Trim(Sheets("SAP_DATA").Cells(lDataRow, 25))
+    z = Trim(Sheets("SAP_DATA").Cells(lDataRow, 26))
+    aa = Trim(Sheets("SAP_DATA").Cells(lDataRow, 27))
+    ab = Trim(Sheets("SAP_DATA").Cells(lDataRow, 28))
+    ac = Trim(Sheets("SAP_DATA").Cells(lDataRow, 29))
+    ad = Trim(Sheets("SAP_DATA").Cells(lDataRow, 30))
+    ae = Trim(Sheets("SAP_DATA").Cells(lDataRow, 31))
+    af = Trim(Sheets("SAP_DATA").Cells(lDataRow, 32))
+    ag = Trim(Sheets("SAP_DATA").Cells(lDataRow, 33))
+    ah = Trim(Sheets("SAP_DATA").Cells(lDataRow, 34))
+    ai = Trim(Sheets("SAP_DATA").Cells(lDataRow, 35))
+    aj = Trim(Sheets("SAP_DATA").Cells(lDataRow, 36))
+
+End Sub
+
+
+Function initft(lvvar)
+    Dim l_i As Long
+      For l_i = LBound(lvvar) To UBound(lvvar)
+         lvvar(l_i) = "/"
+     Next l_i
+End Function
+
+Function clrd() 'clear doc data
+  Dim l_i As Long, l_j As Long
+  For l_i = LBound(dH) To UBound(dH)
+    dH(l_i) = "/"
+  Next l_i
+  
+  For l_i = LBound(dI, 1) To UBound(dI, 1)
+    For l_j = LBound(dI, 2) To UBound(dI, 2)
+      dI(l_i, l_j) = "/"
+    Next l_j
+  Next l_i
+  
+  For l_i = LBound(Er) To UBound(Er)
+    Er(l_i) = ""
+  Next l_i
+  
+End Function
+
+
+
+
+' read parammeters
+Function readPara()
+    Dim ParaRows As Integer, pidx As Integer
+    ParaRows = Sheets("Parameters").UsedRange.Rows.Count
+    
+    C_IgnoreW = False:   C_Sim = False
+    
+    
+    For pidx = 2 To ParaRows
+       If Sheets("Parameters").Cells(pidx, 1) = "Ignore Warning" And Sheets("Parameters").Cells(pidx, 2) = "Y" Then C_IgnoreW = True
+       If Sheets("Parameters").Cells(pidx, 1) = "SimulateMode" And Sheets("Parameters").Cells(pidx, 2) = "Y" Then C_Sim = True
+       'If Sheets("Parameters").Cells(pidx, 1) = "ParaName" then ParaValue = Sheets("Parameters").Cells(pidx, 2)
+    Next pidx
+
+
+End Function
+
+
+
+
+    
+Private Sub PlayBack_The_Script()
+'called from the main sub - "Excel_Starts_Here"
+On Error GoTo ErrorHandler
+'//************************************************
+    
+    ' enter FBxx
+    session.findById("wnd[0]/tbar[0]/okcd").text = "/n" + Trim(Sheets("SAP_DATA").Cells(1, 1))
+    session.findById("wnd[0]").sendVKey 0
+    
+    Dim ii As Integer, iii As Integer, lpi As Integer
+    
+    For ii = LBound(dH) To UBound(dH)
+       If Trim(Sheets("Cust").Cells(ii + 1, 2)) <> "" And dH(ii) <> "/" Then
+       
+         If Trim(Sheets("Cust").Cells(ii + 1, 4)) = "" Then
+           fillField "wnd[0]/usr/" & Trim(Sheets("Cust").Cells(ii + 1, 2)), Trim(dH(ii)), Sheets("Cust").Cells(ii + 1, 6)
+         Else
+           session.findById(Trim(Sheets("Cust").Cells(ii + 1, 4))).Select
+           
+           If session.findById("wnd[0]/sbar").messageType = "W" And C_IgnoreW Then
+                Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+                session.findById("wnd[0]").sendVKey 0
+           ElseIf session.findById("wnd[0]/sbar").messageType = "W" Then
+                Er(4) = ";Wrn:" & session.findById("wnd[0]/sbar").text
+                Er(3) = "Skipped Posting due to warning"
+                Exit Sub
+           ElseIf Not session.findById("wnd[1]/tbar[0]", False) Is Nothing Then
+                If Right(session.findById("wnd[1]").text, 11) = "Information" Or Right(session.findById("wnd[1]").text, 2) = "ÐÅÏ¢" Then
+                    Er(4) = Er(4) & ";Info:" & session.findById("wnd[1]/usr/txtMESSTXT1").text & session.findById("wnd[1]/usr/txtMESSTXT2").text
+                    session.findById("wnd[1]/tbar[0]/btn[0]").press
+                End If
+           End If
+           fillField "wnd[1]/usr/" & Trim(Sheets("Cust").Cells(ii + 1, 2)), Trim(dH(ii)), Sheets("Cust").Cells(ii + 1, 6)
+           session.findById(Trim(Sheets("Cust").Cells(ii + 1, 5))).press
+         End If
+       End If
+    Next ii
+    
+ 
+    
+    For iii = LBound(dI, 1) To UBound(dI, 1)  'items
+       Dim enter As Boolean: enter = False
+        
+       If dI(iii, 1) = "/" Then Exit For
+        
+        
+       For ii = LBound(dI, 2) To UBound(dI, 2)
+        
+           If InStr(Sheets("Cust").Cells(ii + 1, 8), "RF05A") = 0 And enter = False Then
+             session.findById("wnd[0]").sendVKey 0
+             
+             For lpi = 1 To 4  ' Process warining and errors
+              If session.findById("wnd[0]/sbar").messageType = "W" And C_IgnoreW Then
+                Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+                session.findById("wnd[0]").sendVKey 0
+              ElseIf session.findById("wnd[0]/sbar").messageType = "W" Then
+                Er(4) = ";Wrn:" & session.findById("wnd[0]/sbar").text
+                Er(3) = "Skipped due to warning"
+                Exit Sub
+              ElseIf Not session.findById("wnd[1]/tbar[0]", False) Is Nothing Then
+                If Right(session.findById("wnd[1]").text, 11) = "Information" Or Right(session.findById("wnd[1]").text, 2) = "ÐÅÏ¢" Then
+                    Er(4) = Er(4) & ";Info:" & session.findById("wnd[1]/usr/txtMESSTXT1").text & session.findById("wnd[1]/usr/txtMESSTXT2").text
+                    session.findById("wnd[1]/tbar[0]/btn[0]").press
+                End If
+              End If
+             Next lpi
+              If session.findById("wnd[0]/sbar").messageType = "E" Then
+                Er(4) = ";Err:" & session.findById("wnd[0]/sbar").text
+                Er(3) = "Skipped due to Error"
+                Exit Sub
+              End If
+    
+             enter = True
+    
+           End If
+           
+           Dim sid As String
+           If Trim(Sheets("Cust").Cells(ii + 1, 8)) <> "" And Trim(dI(iii, ii)) <> "/" Then
+           
+              If InStr(Trim(Sheets("Cust").Cells(ii + 1, 8)), "WRBTR") > 0 Then
+                dI(iii, ii) = Round(dI(iii, ii), 2)
+              End If
+           
+           
+              If Trim(Sheets("Cust").Cells(ii + 1, 10)) = "" Then
+                  sid = Trim(Sheets("Cust").Cells(ii + 1, 8))
+                  If InStr(sid, "*") = 0 Then
+                    sid = "wnd[0]/usr/" & sid
+                  Else
+                    sid = FindByIdPart(session.findById("wnd[0]/usr"), "wnd\[0\]\/usr\/" & sid)
+                  End If
+                  
+                  fillField sid, Trim(dI(iii, ii)), Sheets("Cust").Cells(ii + 1, 12)
+              
+              Else
+              
+                  sid = Trim(Sheets("Cust").Cells(ii + 1, 10))
+                  If InStr(sid, "*") = 0 Then
+                    sid = "wnd[0]/usr/" & sid
+                  Else
+                    sid = FindByIdPart(session.findById("wnd[0]/usr"), "wnd\[0\]\/usr\/" & sid)
+                  End If
+                  sid = Replace(sid, "/app/con[0]/ses[0]/", "")
+                  If InStr(sid, "menu") > 0 Then
+                    session.findById(sid).Select
+                  Else
+                    session.findById(sid).press
+                  End If
+                
+                fillField "wnd[1]/usr/" & Trim(Sheets("Cust").Cells(ii + 1, 8)), Trim(dI(iii, ii)), Sheets("Cust").Cells(ii + 1, 12)
+                
+                session.findById(Trim(Sheets("Cust").Cells(ii + 1, 11))).press
+                
+              End If
+    
+           End If
+        Next ii
+    Next iii
+      
+    
+    session.findById("wnd[0]/mbar/menu[0]/menu[3]").Select
+    
+    For lpi = 1 To 4  ' Process warining and errors
+        If session.findById("wnd[0]/sbar").messageType = "W" And C_IgnoreW Then
+          Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+          session.findById("wnd[0]").sendVKey 0
+        ElseIf session.findById("wnd[0]/sbar").messageType = "W" Then
+          Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+          Er(3) = "Skipped Posting due to warning"
+        ElseIf Not session.findById("wnd[1]/tbar[0]", False) Is Nothing Then
+                If Right(session.findById("wnd[1]").text, 11) = "Information" Or Right(session.findById("wnd[1]").text, 2) = "ÐÅÏ¢" Then
+                    Er(4) = Er(4) & ";Info:" & session.findById("wnd[1]/usr/txtMESSTXT1").text & session.findById("wnd[1]/usr/txtMESSTXT2").text
+                    session.findById("wnd[1]/tbar[0]/btn[0]").press
+                End If
+          
+        ElseIf session.findById("wnd[0]/sbar").messageType = "E" Then
+          Er(4) = Er(4) & ";Err:" & session.findById("wnd[0]/sbar").text
+          Er(3) = "Skipped Posting due to Err"
+        End If
+    Next lpi
+    
+    
+    If Not C_Sim Then ' if simulate
+        session.findById("wnd[0]/tbar[0]/btn[11]").press
+    End If
+    
+    For lpi = 1 To 4  ' Process warining and errors
+        If session.findById("wnd[0]/sbar").messageType = "W" And C_IgnoreW Then
+          Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+          session.findById("wnd[0]").sendVKey 0
+        ElseIf session.findById("wnd[0]/sbar").messageType = "W" Then
+          Er(4) = Er(4) & ";Wrn:" & session.findById("wnd[0]/sbar").text
+          Er(3) = "Skipped Posting due to warning"
+        ElseIf Not session.findById("wnd[1]/tbar[0]", False) Is Nothing Then
+                If Right(session.findById("wnd[1]").text, 11) = "Information" Or Right(session.findById("wnd[1]").text, 2) = "ÐÅÏ¢" Then
+                    Er(4) = Er(4) & ";Info:" & session.findById("wnd[1]/usr/txtMESSTXT1").text & session.findById("wnd[1]/usr/txtMESSTXT2").text
+                    session.findById("wnd[1]/tbar[0]/btn[0]").press
+                End If
+        ElseIf session.findById("wnd[0]/sbar").messageType = "E" Then
+          Er(4) = Er(4) & ";Err:" & session.findById("wnd[0]/sbar").text
+          Er(3) = "Skipped Posting due to Err"
+        End If
+    Next lpi
+    
+    '//__________________________________________________________________________________________________________
+
+
+
+    If session.ActiveWindow.text = "Error" Then Err.Raise 99 ' error detected?
+    '
+    
+    If session.ActiveWindow.Children.Count > 1 Then ' see if the collection item exists
+        sMessage = session.ActiveWindow.Children.item((session.ActiveWindow.Children.Count - 1)).text ' message found
+        If sMessage = "" Then sMessage = "OK"
+        Er(5) = sMessage
+    Else
+        Er(5) = "OK" ' message - no error found
+    End If
+    '
+    If session.ActiveWindow.Name = "wnd[1]" And session.ActiveWindow.text = "Log Off" Then
+        session.findById("wnd[1]/usr/btnSPOP-OPTION2").press
+        Er(4) = "error"
+    End If
+    '-------------------------------------------------------
+    Exit Sub
+    
+    
+ErrorHandler:
+    Sleep (3000)
+        'return the error message 3/4/06 - ***
+                sMessage = "Error # " & Str(Err.number) & " was generated by " _
+            & Err.Source & Chr(13) & Err.Description '& Err.HelpFile & Err.HelpContext
+            Er(9) = sMessage
+    
+    On Error Resume Next
+    If session.ActiveWindow.Type = "GuiModalWindow" Then
+       Er(6) = session.ActiveWindow.text & " " & session.ActiveWindow.PopupDialogText '3/16/2006 - *** - additional message to return
+    Else
+        Er(6) = session.ActiveWindow.text
+    End If
+            '
+    If session.ActiveWindow.Children.Count > 1 Then
+        Er(7) = session.ActiveWindow.Children.item((session.ActiveWindow.Children.Count - 1)).text
+    End If
+    
+    If session.ActiveWindow.SystemFocus Is Nothing Then
+    ' ------------
+            If sStartingTransaction = "SESSION_MANAGER" Then sStartingTransaction = ""
+        ' 12/15/04 test and close window[1] - ***
+            If session.ActiveWindow.Name = "wnd[1]" Then
+                session.findById("wnd[1]").Close
+            Else
+                If session.ActiveWindow.Name <> "wnd[0]" Then '3/17/06 - ***
+                    AppActivate "Microsoft Excel"
+                    MsgBox " Lost SAP focus "
+                    ContinueOrCancel 'ask
+                    
+                Else
+                    session.findById("wnd[0]/tbar[0]/okcd").text = "/n" & sStartingTransaction
+                    session.findById("wnd[0]/tbar[0]/btn[0]").press
+                    '
+                End If
+            End If
+    ' ------------
+    Else
+        Er(3) = session.ActiveWindow.SystemFocus.text
+         If session.ActiveWindow.Name = "wnd[3]" Then
+            session.findById("wnd[3]/tbar[0]/btn[0]").press 'auto ackn error
+            session.findById("wnd[2]/tbar[0]/btn[12]").press ' hit cancel
+            '********** test before pressing the cancel key on window [1]- *** 12/15/04
+            Sleep (10)
+         End If
+         If session.ActiveWindow.Name = "wnd[2]" Then
+            session.findById("wnd[2]/tbar[0]/btn[0]").press 'auto ackn error
+            '********** test before pressing the cancel key on window [1]- *** 12/15/04
+            Sleep (10)
+         End If
+        If session.ActiveWindow.Name = "wnd[1]" Then
+            If session.ActiveWindow.Children.Count > 0 Then ' 3/16/06 - ***
+                If session.ActiveWindow.text = "Information" Then ' blow off the message
+                    session.findById("wnd[1]/tbar[0]/btn[0]").press
+                    Resume '***This retries the keystroke that caused the error***3/5/2004
+                End If
+            End If
+                session.findById("wnd[1]/tbar[0]/btn[12]").press ' pound on that cancel key
+        End If
+        
+        If session.ActiveWindow.Name = "wnd[0]" Then
+            'test for starting at the menu
+            If sStartingTransaction = "SESSION_MANAGER" Or sStartingTransaction = "" Then  'avoid an error 3/17/06 - ***
+                If session.ActiveWindow.text <> "SAP Easy Access" Then session.findById("wnd[0]/tbar[0]/btn[12]").press ' hit cancel
+                '
+                session.findById("wnd[0]/tbar[0]/okcd").text = "/n" '3/17/06 - ***
+                session.findById("wnd[0]/tbar[0]/btn[0]").press
+                '
+            Else
+                session.findById("wnd[0]/tbar[0]/okcd").text = "/n" & sStartingTransaction
+                session.findById("wnd[0]/tbar[0]/btn[0]").press
+            End If
+        Else
+            ContinueOrCancel 'ask
+        End If 'Session.ActiveWindow.Name = "wnd[0]"
+    End If 'Session.ActiveWindow.SystemFocus Is Nothing
+    '
+End Sub
+
+
+
+Private Sub ContinueOrCancel()
+    '   -------------------------------------------------------------------
+    sContinue = MsgBox("Do you want to Continue?", vbRetryCancel)
+    If sContinue = vbRetry Then    ' User chose Yes.
+        MsgBox "recycle SAP transaction (Green Arrow back) to " & sStartingTransaction
+    Else
+        lDataRow = lLastRow '
+    End If
+    '   -----------------------------------------------------------------------
+
+End Sub
+
+
+
