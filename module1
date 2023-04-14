@@ -195,14 +195,7 @@ Function ifgo()
     dpos = 30: epos = 37
     
     
-    Dim wshshell, hostname
-    Set wshshell = CreateObject("wscript.network")
-    hostname = wshshell.UserDomain
-    If hostname <> "CZH" And hostname <> "APAC.BOSCH.COM" Then
-      MsgBox "Voilation.SAPGui"
-      ifgo = False
-      Exit Function
-    End If
+
 
 
     Dim bEntireRow As Boolean
